@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'at.shorty'
-version = '2.7.1'
+version = '2.7.2'
 
 tasks.register('fatJar', Jar) {
     from {
@@ -16,17 +16,13 @@ tasks.register('fatJar', Jar) {
 
 repositories {
     mavenCentral()
-    maven {
-        url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-        content {
-            includeGroup 'org.bukkit'
-            includeGroup 'org.spigotmc'
-        }
-    }
     maven { url 'https://repo.polar.top/repository/polar/' }
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url = 'https://oss.sonatype.org/content/repositories/central' }
     mavenLocal()
+    maven {
+        url = uri("https://repo.papermc.io/repository/maven-public/")
+    }
 }
 
 dependencies {
