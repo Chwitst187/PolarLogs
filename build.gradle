@@ -35,6 +35,6 @@ dependencies {
     compileOnly("top.polar:api:2.3.0")
     implementation("com.zaxxer:HikariCP:7.1.0")
     implementation("com.cjcrafter:foliascheduler:0.7.0")
-    implementation("net.jodah:expiringmap:0.5.10")
+    implementation("net.jodah:expiringmap:0.5.11")
     annotationProcessor("org.projectlombok:lombok:1.18.22")
 }
