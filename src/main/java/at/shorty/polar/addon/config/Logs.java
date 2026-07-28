@@ -10,12 +10,12 @@ import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
 import lombok.Setter;
 import org.bukkit.configuration.ConfigurationSection;
+import org.jetbrains.annotations.Nullable;
 import top.polar.api.check.Check;
 import top.polar.api.user.User;
 import top.polar.api.user.event.type.CloudCheckType;
 import top.polar.api.user.event.type.PunishmentType;
 
-import javax.annotation.Nullable;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
