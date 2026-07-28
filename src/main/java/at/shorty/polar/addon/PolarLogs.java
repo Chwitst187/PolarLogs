@@ -1,15 +1,13 @@
 package at.shorty.polar.addon;
 
-import at.shorty.polar.addon.commands.PolarLogsCommand;
 import at.shorty.polar.addon.config.*;
 import at.shorty.polar.addon.util.SpecialUtilityJustForFoliaSpecialNeeds;
 import lombok.Getter;
-import org.bukkit.command.CommandMap;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 import top.polar.api.loader.LoaderApi;
 
-import java.lang.reflect.Field;
 import java.util.Set;
 
 public class PolarLogs extends JavaPlugin {
@@ -25,13 +23,11 @@ public class PolarLogs extends JavaPlugin {
     public void onLoad() {
         specialUtilityJustForFoliaSpecialNeeds = new SpecialUtilityJustForFoliaSpecialNeeds(this);
         updateConfig();
-        Mitigation mitigation = Mitigation.loadFromConfigSection(getConfig().getConfigurationSection("mitigation"));
-        Detection detection = Detection.loadFromConfigSection(getConfig().getConfigurationSection("detection"));
-        CloudDetection cloudDetection = CloudDetection.loadFromConfigSection(getConfig().getConfigurationSection("cloud_detection"));
-        Punishment punishment = Punishment.loadFromConfigSection(getConfig().getConfigurationSection("punishment"));
-        logs = Logs.loadFromConfigSection(getConfig().getConfigurationSection("logs"));
-        polarApiHook = new PolarApiHook(this, mitigation, detection, cloudDetection, punishment, logs);
-        LoaderApi.registerEnableCallback(polarApiHook);
+        loadConfigAndApply();
+        if (logs == null) {
+            getLogger().severe("Invalid config, disabling plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+        }
     }
 
     @Override
@@ -39,7 +35,46 @@ public class PolarLogs extends JavaPlugin {
         loadLogs();
     }
 
+    private void loadConfigAndApply() {
+        ConfigurationSection mitigationSection = getSection("mitigation");
+        ConfigurationSection detectionSection = getSection("detection");
+        ConfigurationSection cloudDetectionSection = getSection("cloud_detection");
+        ConfigurationSection punishmentSection = getSection("punishment");
+        ConfigurationSection logsSection = getSection("logs");
+
+        if (mitigationSection == null || detectionSection == null || cloudDetectionSection == null || punishmentSection == null || logsSection == null) {
+            logs = null;
+            return;
+        }
+
+        Mitigation mitigation = Mitigation.loadFromConfigSection(mitigationSection);
+        Detection detection = Detection.loadFromConfigSection(detectionSection);
+        CloudDetection cloudDetection = CloudDetection.loadFromConfigSection(cloudDetectionSection);
+        Punishment punishment = Punishment.loadFromConfigSection(punishmentSection);
+        logs = Logs.loadFromConfigSection(logsSection);
+
+        if (polarApiHook == null) {
+            polarApiHook = new PolarApiHook(this, mitigation, detection, cloudDetection, punishment, logs);
+            LoaderApi.registerEnableCallback(polarApiHook);
+        } else {
+            polarApiHook.reloadConfig(mitigation, detection, cloudDetection, punishment, logs);
+        }
+    }
+
+    private ConfigurationSection getSection(String path) {
+        ConfigurationSection section = getConfig().getConfigurationSection(path);
+        if (section == null) {
+            getLogger().severe("Missing config section: " + path);
+        }
+        return section;
+    }
+
     private void loadLogs() {
+        if (logs == null) {
+            getLogger().severe("Logs config is missing. Plugin startup is incomplete.");
+            return;
+        }
+
         if (logs.isEnabled()) {
             if (!logs.getContext().matches("^[a-zA-Z0-9_]+$") || logs.getContext().isEmpty()) {
                 getLogger().severe("Invalid log context name, must be [a-zA-Z0-9_]");
@@ -64,7 +99,9 @@ public class PolarLogs extends JavaPlugin {
     }
 
     public void testWebhook() {
-        polarApiHook.testWebhook();
+        if (polarApiHook != null) {
+            polarApiHook.testWebhook();
+        }
     }
 
     public void reloadPluginConfig() {
@@ -72,26 +109,29 @@ public class PolarLogs extends JavaPlugin {
         if (logs != null) {
             logs.dropConnection();
         }
-        logs = Logs.loadFromConfigSection(getConfig().getConfigurationSection("logs"));
+
+        loadConfigAndApply();
+        if (logs == null) {
+            getLogger().severe("Reloaded config is invalid. Skipping log reload.");
+            return;
+        }
+
         loadLogs();
-        polarApiHook.reloadConfig(
-                Mitigation.loadFromConfigSection(getConfig().getConfigurationSection("mitigation")),
-                Detection.loadFromConfigSection(getConfig().getConfigurationSection("detection")),
-                CloudDetection.loadFromConfigSection(getConfig().getConfigurationSection("cloud_detection")),
-                Punishment.loadFromConfigSection(getConfig().getConfigurationSection("punishment")),
-                logs
-        );
     }
 
     // https://www.spigotmc.org/threads/solved-replacing-a-config-file.40420/#post-462207, accessed 1st April 2024
     public void updateConfig() {
         saveDefaultConfig();
-        Set<String> options = getConfig().getDefaults().getKeys(false);
+        Configuration defaults = getConfig().getDefaults();
+        if (defaults == null) {
+            return;
+        }
+        Set<String> options = defaults.getKeys(false);
         Set<String> currentOptions = getConfig().getKeys(false);
         boolean changed = false;
         for (String option : options) {
             if (!currentOptions.contains(option)) {
-                getConfig().set(option, getConfig().getDefaults().get(option));
+                getConfig().set(option, defaults.get(option));
                 changed = true;
             }
         }
@@ -101,7 +141,6 @@ public class PolarLogs extends JavaPlugin {
                 changed = true;
             }
         }
-        getConfig().options().copyHeader(true);
         if (changed) saveConfig();
     }
 }

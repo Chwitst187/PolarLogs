@@ -1,21 +1,21 @@
 package at.shorty.polar.addon.util;
 
 import at.shorty.polar.addon.PolarLogs;
-import com.cjcrafter.foliascheduler.FoliaCompatibility;
-import com.cjcrafter.foliascheduler.ServerImplementation;
 import lombok.Getter;
+import org.bukkit.Bukkit;
 
 @Getter
 public class SpecialUtilityJustForFoliaSpecialNeeds {
 
-    private final ServerImplementation serverImplementation;
+    private final PolarLogs plugin;
 
     public SpecialUtilityJustForFoliaSpecialNeeds(PolarLogs plugin) {
-        serverImplementation = new FoliaCompatibility(plugin).getServerImplementation();
+        this.plugin = plugin;
     }
 
     public void runAsyncNow(Runnable runnable) {
-        serverImplementation.async().runNow(runnable);
+        if (runnable == null) return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable);
     }
 
 }
