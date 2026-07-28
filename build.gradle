@@ -17,7 +17,7 @@ tasks.register('fatJar', Jar) {
 
 repositories {
     mavenCentral()
-    maven { url 'https://repo.polar.top/repository/polar/' }
+    maven { url = uri('https://repo.polar.top/repository/polar/') }
     maven { url = 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url = 'https://oss.sonatype.org/content/repositories/central' }
     mavenLocal()
