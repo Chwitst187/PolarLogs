@@ -35,12 +35,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.projectlombok:lombok:1.18.46")
+    compileOnly("org.projectlombok:lombok:1.18.48")
     compileOnly("io.papermc.paper:paper-api:26.2.build.+")
     compileOnly("top.polar:api:2.4.1")
     implementation("com.zaxxer:HikariCP:7.1.0")
     implementation("net.jodah:expiringmap:0.5.11")
-    annotationProcessor("org.projectlombok:lombok:1.18.46")
+    annotationProcessor("org.projectlombok:lombok:1.18.48")
 }
 
 java {
